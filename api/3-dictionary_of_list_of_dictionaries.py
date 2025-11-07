@@ -1,43 +1,42 @@
 #!/usr/bin/python3
-import requests
+"""Module"""
+
 import json
+import requests
 
-def main():
-    # API URLs
-    users_url = "https://jsonplaceholder.typicode.com/users"
-    todos_url = "https://jsonplaceholder.typicode.com/todos"
 
-    # Fetch all users
-    users_response = requests.get(users_url)
-    users_response.raise_for_status()
-    users = users_response.json()
-    
-    # Create a mapping: user_id (int) -> username
-    user_dict = {user["id"]: user["username"] for user in users}
+def get_employee_task(employee_id):
+    """Doc"""
+    user_url = "https://jsonplaceholder.typicode.com/users/{}" \
+        .format(employee_id)
 
-    # Fetch all TODOs
-    todos_response = requests.get(todos_url)
-    todos_response.raise_for_status()
-    todos = todos_response.json()
+    user_info = requests.request('GET', user_url).json()
 
-    # Prepare the JSON structure
-    all_data = {}
-    for task in todos:
-        user_id = task["userId"]  # keep as integer
-        if user_id not in all_data:
-            all_data[user_id] = []
-        all_data[user_id].append({
-            "username": user_dict[user_id],  # integer key works now
-            "task": task["title"],
-            "completed": task["completed"]
-        })
+    employee_username = user_info["username"]
+    todos_url = "https://jsonplaceholder.typicode.com/users/{}/todos/" \
+        .format(employee_id)
+    todos_info = requests.request('GET', todos_url).json()
+    return [
+        dict(zip(["task", "completed", "username"],
+                 [task["title"], task["completed"], employee_username]))
+        for task in todos_info]
 
-    # Convert keys to strings before writing JSON (optional, matches example)
-    all_data_str_keys = {str(k): v for k, v in all_data.items()}
 
-    # Write to JSON file
-    with open("todo_all_employees.json", "w", encoding="utf-8") as f:
-        json.dump(all_data_str_keys, f, indent=4)
+def get_employee_ids():
+    """Doc"""
+    users_url = "https://jsonplaceholder.typicode.com/users/"
 
-if __name__ == "__main__":
-    main()
+    users_info = requests.request('GET', users_url).json()
+    ids = list(map(lambda user: user["id"], users_info))
+    return ids
+
+
+if __name__ == '__main__':
+
+    employee_ids = get_employee_ids()
+
+    with open('todo_all_employees.json', "w") as file:
+        all_users = {}
+        for employee_id in employee_ids:
+            all_users[str(employee_id)] = get_employee_task(employee_id)
+        file.write(json.dumps(all_users))
