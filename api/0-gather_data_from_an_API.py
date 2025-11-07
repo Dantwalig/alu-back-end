@@ -14,9 +14,8 @@ if __name__ == '__main__':
     user_info = requests.get(user_url).json()
     todos_info = requests.get(todos_url).json()
 
-    employee_name = user_info.get("name")
-    completed_tasks = [task for task in todos_info
-                       if task.get("completed") is True]
+    employee_name = user_info["name"]
+    completed_tasks = [task for task in todos_info if task["completed"]]
     number_of_done_tasks = len(completed_tasks)
     total_number_of_tasks = len(todos_info)
 
@@ -24,4 +23,4 @@ if __name__ == '__main__':
         employee_name, number_of_done_tasks, total_number_of_tasks))
 
     for task in completed_tasks:
-        print("\t {}".format(task.get("title")))
+        print("\t {}".format(task["title"]))
